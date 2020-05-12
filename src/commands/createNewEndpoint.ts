@@ -10,6 +10,7 @@ import { IActionContext } from "vscode-azureextensionui";
 import { AzureExtensionApiProvider } from 'vscode-azureextensionui/api';
 import { ext } from '../extensionVariables';
 import { localize } from '../utils/localize';
+import { nonNullValue } from '../utils/nonNull';
 import { AzureFunctionsExtensionApi } from '../vscode-azurefunctions.api';
 
 export async function createNewEndpoint(_context: IActionContext): Promise<void> {
@@ -53,7 +54,7 @@ export async function createNewEndpoint(_context: IActionContext): Promise<void>
     });
 
     const functionsApi: AzureFunctionsExtensionApi | undefined = functionsExtension?.exports?.getApi<AzureFunctionsExtensionApi>('^1.1.0');
-    await functionsApi?.createFunction(
+    await nonNullValue(functionsApi).createFunction(
         {
             folderPath: projectPath,
             functionName: newName, languageFilter: /JavaScript|TypeScript/,
