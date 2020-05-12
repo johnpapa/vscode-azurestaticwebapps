@@ -57,7 +57,7 @@ export async function createNewEndpoint(_context: IActionContext): Promise<void>
     await nonNullValue(functionsApi).createFunction(
         {
             folderPath: projectPath,
-            functionName: newName, languageFilter: /JavaScript|TypeScript/,
+            functionName: newName, languageFilter: /^(Java|Type)Script$/i,
             templateId: 'HttpTrigger',
             functionSettings: { authLevel: 'anonymous' },
             suppressCreateProjectPrompt: true
