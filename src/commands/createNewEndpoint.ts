@@ -17,11 +17,13 @@ export async function createNewEndpoint(_context: IActionContext): Promise<void>
         const noWorkspaceError: string = localize('noWorkspace', 'This action cannot be completed because there is no workspace opened.  Please open a workspace.');
         throw new Error(noWorkspaceError);
     }
+
+    // this relies on the Azure Functions Extension, so get the API ready/activate
     const funcExtensionId: string = 'ms-azuretools.vscode-azurefunctions';
     const functionsExtension: Extension<AzureExtensionApiProvider | undefined> | undefined = extensions.getExtension(funcExtensionId);
 
     if (!functionsExtension) {
-        // Azure Functions Extension is a dependency, but handle the case if getExtension fails somehow
+        // Azure Functions Extension is a dependency so this shouldn't happen, but handle the case if getExtension fails somehow
         await commands.executeCommand('extension.open', funcExtensionId);
     } else {
         if (!functionsExtension.isActive) {
@@ -29,11 +31,11 @@ export async function createNewEndpoint(_context: IActionContext): Promise<void>
         }
     }
 
-    const endpointName: string = 'endpoint';
     const projectPath: string = path.join(workspace.workspaceFolders[0].uri.fsPath, 'api');
-
     const maxTries: number = 100;
     let count: number = 1;
+
+    const endpointName: string = 'endpoint';
     let newName: string = endpointName;
 
     while (count < maxTries) {
@@ -50,9 +52,15 @@ export async function createNewEndpoint(_context: IActionContext): Promise<void>
         }
     });
 
-    const functionsApi: AzureFunctionsExtensionApi | undefined = functionsExtension?.exports?.getApi<AzureFunctionsExtensionApi>('^1.0.0');
-    await functionsApi?.createFunction({ folderPath: projectPath, functionName: newName, languageFilter: /JavaScript|TypeScript/, templateId: 'HttpTrigger', functionSettings: { authLevel: 'anonymous' }, suppressCreateProjectPrompt: true });
-
+    const functionsApi: AzureFunctionsExtensionApi | undefined = functionsExtension?.exports?.getApi<AzureFunctionsExtensionApi>('^1.1.0');
+    await functionsApi?.createFunction(
+        {
+            folderPath: projectPath,
+            functionName: newName, languageFilter: /JavaScript|TypeScript/,
+            templateId: 'HttpTrigger',
+            functionSettings: { authLevel: 'anonymous' },
+            suppressCreateProjectPrompt: true
+        });
 }
 
 function generateSuffixedName(preferredName: string, i: number): string {
