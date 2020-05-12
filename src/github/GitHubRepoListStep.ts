@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { AzureWizardPromptStep, IAzureQuickPickItem, IWizardOptions } from 'vscode-azureextensionui';
-import { RepoCreateStep } from '../commands/createNewEndpoint/RepoCreateStep';
-import { RepoNameStep } from '../commands/createNewEndpoint/RepoNameStep';
+import { RepoCreateStep } from '../commands/createNewRepo/RepoCreateStep';
+import { RepoNameStep } from '../commands/createNewRepo/RepoNameStep';
 import { IStaticWebAppWizardContext } from '../commands/createStaticWebApp/IStaticWebAppWizardContext';
 import { ext } from '../extensionVariables';
 import { createGitHubRequestOptions, getGitHubQuickPicksWithLoadMore, gitHubRepoData, gitHubWebResource, ICachedQuickPicks } from '../utils/gitHubUtils';

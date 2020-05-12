@@ -5,19 +5,32 @@
 
 import * as fse from 'fs-extra';
 import * as path from 'path';
-import * as vscode from 'vscode';
+import { commands, Extension, extensions, workspace } from 'vscode';
 import { IActionContext } from "vscode-azureextensionui";
-import { noWorkspaceError } from '../../constants';
-import { ext } from '../../extensionVariables';
-import { localize } from '../../utils/localize';
+import { AzureExtensionApiProvider } from 'vscode-azureextensionui/api';
+import { ext } from '../extensionVariables';
+import { localize } from '../utils/localize';
+import { AzureFunctionsExtensionApi } from '../vscode-azurefunctions.api';
 
 export async function createNewEndpoint(_context: IActionContext): Promise<void> {
-    if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length <= 0) {
+    if (!workspace.workspaceFolders || workspace.workspaceFolders.length <= 0) {
+        const noWorkspaceError: string = localize('noWorkspace', 'This action cannot be completed because there is no workspace opened.  Please open a workspace.');
         throw new Error(noWorkspaceError);
+    }
+    const funcExtensionId: string = 'ms-azuretools.vscode-azurefunctions';
+    const functionsExtension: Extension<AzureExtensionApiProvider | undefined> | undefined = extensions.getExtension(funcExtensionId);
+
+    if (!functionsExtension) {
+        // Azure Functions Extension is a dependency, but handle the case if getExtension fails somehow
+        await commands.executeCommand('extension.open', funcExtensionId);
+    } else {
+        if (!functionsExtension.isActive) {
+            await functionsExtension.activate();
+        }
     }
 
     const endpointName: string = 'endpoint';
-    const projectPath: string = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'api');
+    const projectPath: string = path.join(workspace.workspaceFolders[0].uri.fsPath, 'api');
 
     const maxTries: number = 100;
     let count: number = 1;
@@ -37,7 +50,8 @@ export async function createNewEndpoint(_context: IActionContext): Promise<void>
         }
     });
 
-    await vscode.commands.executeCommand('azureFunctions.createFunction', projectPath, 'HttpTrigger', newName, { authLevel: 'anonymous' });
+    const functionsApi: AzureFunctionsExtensionApi | undefined = functionsExtension?.exports?.getApi<AzureFunctionsExtensionApi>('^1.0.0');
+    await functionsApi?.createFunction({ folderPath: projectPath, functionName: newName, languageFilter: /JavaScript|TypeScript/, templateId: 'HttpTrigger', functionSettings: { authLevel: 'anonymous' }, suppressCreateProjectPrompt: true });
 
 }
 
